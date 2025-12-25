@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { conversationService } from '../services/conversationService.js';
+import { llmService } from '../services/llmService.js';
 import { validateChatMessage, ChatMessageInput } from '../middleware/validation.js';
 import { createError } from '../middleware/errorHandler.js';
 import rateLimit from 'express-rate-limit';
@@ -44,15 +45,15 @@ router.post(
             // Get conversation history for context
             const history = await conversationService.getRecentMessages(conversation.id);
 
-            // TODO: In Phase 4, we'll add LLM integration here
-            // For now, return a placeholder response
-            const reply = `Thank you for your message: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}". LLM integration coming in Phase 4!`;
+            // Generate AI reply using LLM
+            const { reply, tokensUsed } = await llmService.generateReply(message, history);
 
             // Save AI response
             await conversationService.addMessage({
                 conversationId: conversation.id,
                 sender: 'ai',
-                text: reply
+                text: reply,
+                tokenCount: tokensUsed
             });
 
             res.json({
