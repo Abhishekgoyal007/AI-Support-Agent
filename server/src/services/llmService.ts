@@ -1,11 +1,10 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Message } from '@prisma/client';
 import { knowledgeService } from './knowledgeService.js';
 
 // Configuration
-const MAX_TOKENS = 500;
 const MAX_HISTORY_MESSAGES = 10;
-const MODEL = 'gpt-4o-mini';
+const MODEL = 'gemini-1.5-flash';
 
 interface LLMResponse {
     reply: string;
@@ -13,21 +12,21 @@ interface LLMResponse {
 }
 
 export class LLMService {
-    private client: OpenAI | null = null;
+    private client: GoogleGenerativeAI | null = null;
 
     constructor() {
-        const apiKey = process.env.OPENAI_API_KEY;
+        const apiKey = process.env.GEMINI_API_KEY;
 
-        if (apiKey && apiKey !== 'your_openai_api_key_here') {
-            this.client = new OpenAI({ apiKey });
-            console.log('✅ OpenAI client initialized');
+        if (apiKey && apiKey !== 'your_gemini_api_key_here') {
+            this.client = new GoogleGenerativeAI(apiKey);
+            console.log('✅ Gemini client initialized');
         } else {
-            console.warn('⚠️ OpenAI API key not configured. Using mock responses.');
+            console.warn('⚠️ Gemini API key not configured. Using mock responses.');
         }
     }
 
     /**
-     * Generate a reply using the LLM
+     * Generate a reply using Gemini
      */
     async generateReply(
         userMessage: string,
@@ -40,26 +39,32 @@ export class LLMService {
 
         try {
             const systemPrompt = await this.buildSystemPrompt();
-            const messages = this.buildMessages(systemPrompt, conversationHistory, userMessage);
-
-            const response = await this.client.chat.completions.create({
+            const model = this.client.getGenerativeModel({
                 model: MODEL,
-                messages,
-                max_tokens: MAX_TOKENS,
-                temperature: 0.7,
-                presence_penalty: 0.1,
-                frequency_penalty: 0.1
+                systemInstruction: systemPrompt
             });
 
-            const reply = response.choices[0]?.message?.content ||
-                "I apologize, but I couldn't generate a response. Please try again.";
+            // Build chat history
+            const history = this.buildHistory(conversationHistory);
+
+            const chat = model.startChat({
+                history,
+                generationConfig: {
+                    maxOutputTokens: 500,
+                    temperature: 0.7,
+                }
+            });
+
+            const result = await chat.sendMessage(userMessage);
+            const response = await result.response;
+            const reply = response.text();
 
             return {
                 reply: reply.trim(),
-                tokensUsed: response.usage?.total_tokens
+                tokensUsed: response.usageMetadata?.totalTokenCount
             };
         } catch (error) {
-            console.error('LLM API Error:', error);
+            console.error('Gemini API Error:', error);
             return this.handleLLMError(error);
         }
     }
@@ -94,60 +99,35 @@ Remember: You represent TechNest. Be helpful, accurate, and friendly!`;
     }
 
     /**
-     * Build the messages array for the API call
+     * Build the chat history for Gemini
      */
-    private buildMessages(
-        systemPrompt: string,
-        history: Message[],
-        userMessage: string
-    ): OpenAI.Chat.ChatCompletionMessageParam[] {
-        const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-            { role: 'system', content: systemPrompt }
-        ];
+    private buildHistory(messages: Message[]): Array<{ role: 'user' | 'model', parts: [{ text: string }] }> {
+        const recentHistory = messages.slice(-MAX_HISTORY_MESSAGES);
 
-        // Add recent conversation history
-        const recentHistory = history.slice(-MAX_HISTORY_MESSAGES);
-        for (const msg of recentHistory) {
-            messages.push({
-                role: msg.sender === 'user' ? 'user' : 'assistant',
-                content: msg.text
-            });
-        }
-
-        // Add the current user message
-        messages.push({ role: 'user', content: userMessage });
-
-        return messages;
+        return recentHistory.map(msg => ({
+            role: msg.sender === 'user' ? 'user' as const : 'model' as const,
+            parts: [{ text: msg.text }]
+        }));
     }
 
     /**
      * Handle LLM API errors gracefully
      */
     private handleLLMError(error: unknown): LLMResponse {
-        if (error instanceof OpenAI.APIError) {
-            switch (error.status) {
-                case 401:
-                    console.error('Invalid API key');
-                    return {
-                        reply: "I'm having trouble connecting right now. Please try again in a moment, or contact support for immediate assistance."
-                    };
-                case 429:
-                    console.error('Rate limit exceeded');
-                    return {
-                        reply: "I'm receiving a lot of questions right now! Please wait a moment and try again, or contact us at support@technest.com."
-                    };
-                case 500:
-                case 502:
-                case 503:
-                    console.error('OpenAI service error');
-                    return {
-                        reply: "I'm experiencing some technical difficulties. Please try again in a few moments."
-                    };
-                default:
-                    return {
-                        reply: "I encountered an unexpected issue. Please try again, or reach out to our support team."
-                    };
-            }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+        if (errorMessage.includes('RATE_LIMIT') || errorMessage.includes('429')) {
+            console.error('Rate limit exceeded');
+            return {
+                reply: "I'm receiving a lot of questions right now! Please wait a moment and try again, or contact us at support@technest.com."
+            };
+        }
+
+        if (errorMessage.includes('API_KEY') || errorMessage.includes('401')) {
+            console.error('Invalid API key');
+            return {
+                reply: "I'm having trouble connecting right now. Please try again in a moment, or contact support for immediate assistance."
+            };
         }
 
         return {
