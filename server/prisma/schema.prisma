@@ -1,0 +1,49 @@
+// Prisma Schema for Spur AI Support Agent
+// Database: SQLite (for easy setup and portability)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Conversation/Session model
+model Conversation {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  metadata  String?   // JSON string for additional data
+  messages  Message[]
+
+  @@index([createdAt])
+}
+
+// Message model - stores both user and AI messages
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         String       // "user" or "ai"
+  text           String
+  createdAt      DateTime     @default(now())
+  tokenCount     Int?         // Optional: track token usage
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+// FAQ/Knowledge Base - stores domain knowledge for the AI
+model KnowledgeBase {
+  id        String   @id @default(uuid())
+  category  String   // e.g., "shipping", "returns", "support"
+  question  String
+  answer    String
+  priority  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}
