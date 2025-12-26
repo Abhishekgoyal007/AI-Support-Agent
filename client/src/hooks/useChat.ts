@@ -12,18 +12,14 @@ export function useChat() {
         localStorage.getItem(SESSION_KEY)
     );
 
-    // Load history on mount
     useEffect(() => {
         if (sessionId) {
             setIsLoading(true);
             getChatHistory(sessionId)
                 .then(res => {
-                    if (res.messages.length > 0) {
-                        setMessages(res.messages);
-                    }
+                    if (res.messages.length > 0) setMessages(res.messages);
                 })
                 .catch(() => {
-                    // Session invalid, clear it
                     localStorage.removeItem(SESSION_KEY);
                     setSessionId(null);
                 })
@@ -35,9 +31,8 @@ export function useChat() {
         const trimmed = text.trim();
         if (!trimmed || isLoading) return;
 
-        // Validate message length
         if (trimmed.length > 4000) {
-            setError('Message is too long. Please keep it under 4000 characters.');
+            setError('Message too long (max 4000 characters)');
             return;
         }
 
@@ -69,21 +64,17 @@ export function useChat() {
 
             setMessages(prev => [...prev, aiMsg]);
         } catch (err) {
-            // Friendly error messages
             let errorMsg = 'Something went wrong. Please try again.';
-
             if (err instanceof Error) {
                 if (err.message.includes('rate') || err.message.includes('Too many')) {
-                    errorMsg = 'Too many requests. Please wait a moment and try again.';
+                    errorMsg = 'Too many requests. Wait a moment.';
                 } else if (err.message.includes('network') || err.message.includes('fetch')) {
-                    errorMsg = 'Connection error. Please check your internet and try again.';
+                    errorMsg = 'Connection error. Check your internet.';
                 } else if (err.message.length < 100) {
                     errorMsg = err.message;
                 }
             }
-
             setError(errorMsg);
-            // Remove the optimistic message
             setMessages(prev => prev.filter(m => m.id !== userMsg.id));
         } finally {
             setIsLoading(false);
