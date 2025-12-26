@@ -168,25 +168,123 @@ curl -X POST http://localhost:3001/api/chat/message \
 4. **Support Hours**: "What are your support hours?"
 5. **Promotions**: "Do you have any discounts?"
 
-## 🏗️ Architecture Decisions
+## 🏗️ Architecture Overview
 
-### Why Gemini 2.5 Flash?
-- Fast response times (~1-2 seconds)
-- Cost-effective for chat applications
-- Excellent context understanding
-- Free tier available for development
+### Backend Structure
 
-### Why SQLite?
-- Zero configuration required
-- Portable (single file database)
-- Perfect for demo/take-home projects
-- Easy to switch to PostgreSQL for production
+```
+server/src/
+├── index.ts              # Express app entry point
+├── lib/
+│   └── prisma.ts         # Prisma client singleton
+├── routes/
+│   └── chat.ts           # Chat API endpoints
+├── services/
+│   ├── conversationService.ts  # CRUD for conversations/messages
+│   ├── knowledgeService.ts     # FAQ retrieval for prompts
+│   └── llmService.ts           # Gemini API integration
+└── middleware/
+    ├── errorHandler.ts   # Global error handling
+    ├── validation.ts     # Zod input validation
+    └── requestLogger.ts  # Request logging
+```
 
-### Why Monorepo?
-- Simplified development workflow
-- Single `npm install` for everything
-- Shared TypeScript types possible
-- Easy deployment configuration
+### Design Decisions
+
+**1. Service Layer Pattern**
+- Business logic is encapsulated in services (`llmService`, `conversationService`)
+- Routes are thin controllers that delegate to services
+- Makes it easy to add new channels (WhatsApp, Instagram) by reusing services
+
+**2. LLM Integration**
+- `LLMService` class encapsulates all Gemini API interactions
+- System prompt includes dynamically fetched FAQ knowledge from database
+- Conversation history (last 10 messages) passed for context
+- Graceful fallback to mock responses when API key is missing
+
+**3. Database Schema**
+```
+Conversation (1) ──→ (N) Message
+                          ├── sender: "user" | "ai"
+                          ├── text: string
+                          └── tokenCount: int (optional)
+
+KnowledgeBase
+├── category: "shipping" | "returns" | etc.
+├── question: string
+├── answer: string
+└── priority: int (for ordering)
+```
+
+**4. Session Management**
+- Session ID stored in localStorage on frontend
+- New session created automatically on first message
+- History loaded on page refresh via GET `/api/chat/history/:sessionId`
+
+### LLM Prompting Strategy
+
+```
+System Prompt Structure:
+┌─────────────────────────────────────┐
+│ Persona: Friendly support agent     │
+│ Guidelines: Concise, helpful, etc.  │
+│ FAQ Knowledge: Dynamically loaded   │
+│ Constraints: No markdown, plain txt │
+└─────────────────────────────────────┘
+         +
+┌─────────────────────────────────────┐
+│ Conversation History (last 10 msgs) │
+└─────────────────────────────────────┘
+         +
+┌─────────────────────────────────────┐
+│ Current User Message                │
+└─────────────────────────────────────┘
+```
+
+### Why These Tech Choices?
+
+| Choice | Reasoning |
+|--------|-----------|
+| **Gemini 2.5 Flash** | Fast (1-2s responses), cost-effective, generous free tier |
+| **SQLite + Prisma** | Zero-config, portable, type-safe ORM, easy PostgreSQL migration |
+| **React + Vite** | Fast dev experience, familiar ecosystem, TypeScript support |
+| **Monorepo** | Single `npm install`, simplified deployment, shared configs |
+| **Zod** | Runtime validation with TypeScript inference |
+
+## 🔮 Trade-offs & If I Had More Time
+
+### Current Trade-offs
+
+| Decision | Trade-off |
+|----------|-----------|
+| SQLite over PostgreSQL | Simpler setup, but no concurrent writes for production |
+| No WebSocket | Polling-based, but simpler architecture for demo |
+| No authentication | Simpler UX, but anyone can access any session with ID |
+| Single LLM provider | Locked to Gemini, but cleaner code without abstraction |
+
+### If I Had More Time...
+
+**Features I'd Add:**
+- 🔐 **User Authentication** - OAuth with Google/GitHub
+- 🔌 **WebSocket Support** - Real-time streaming responses
+- 📊 **Admin Dashboard** - View all conversations, analytics
+- 🌐 **Multi-language Support** - i18n for UI and AI responses
+- 🎨 **Theme Customization** - Light mode, custom branding
+- 📁 **File Uploads** - Share images/documents with support
+
+**Technical Improvements:**
+- ⚡ **Response Streaming** - Stream LLM tokens for faster perceived response
+- 🧪 **Unit Tests** - Jest/Vitest for services and API endpoints
+- 📈 **Observability** - OpenTelemetry tracing, structured logging
+- 🔄 **LLM Fallback** - Automatic failover to OpenAI if Gemini is down
+- 🗃️ **PostgreSQL** - For production scalability
+- 🐳 **Docker** - Containerized deployment
+
+**UX Improvements:**
+- ✏️ **Message Editing** - Edit sent messages
+- 👍 **Feedback Buttons** - Thumbs up/down on AI responses
+- 📋 **Copy Message** - One-click copy for AI responses
+- 🔊 **Sound Notifications** - Audio feedback for new messages
 
 ## 📝 Environment Variables
 
