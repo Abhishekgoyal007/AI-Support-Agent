@@ -17,6 +17,15 @@
   --error: #ef4444;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg-dark);
@@ -25,13 +34,11 @@ body {
 }
 
 .app {
-  height: 100vh;
-  height: 100dvh;
-  /* Dynamic viewport for mobile */
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   width: 100%;
-  margin: 0 auto;
   background: var(--bg-dark);
 }
 
