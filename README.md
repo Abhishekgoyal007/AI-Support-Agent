@@ -2,7 +2,7 @@
 
 AI-powered customer support chat for Spur's take-home assignment. Built with React, Node.js, and Google Gemini.
 
-**Live Demo:** [Coming soon - deploying to Vercel/Render]
+**Live Demo:** https://ai-support-agent-client.vercel.app
 
 ## Quick Start
 
