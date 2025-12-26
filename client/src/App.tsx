@@ -6,14 +6,20 @@ function App() {
   const { messages, isLoading, error, send, clearChat, setError } = useChat();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
+  // Focus input on load
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
   const handleSend = () => {
-    if (input.trim()) {
+    if (input.trim() && !isLoading) {
       send(input);
       setInput('');
     }
@@ -26,32 +32,67 @@ function App() {
     }
   };
 
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <div className="app">
       {/* Header */}
       <header className="header">
-        <h1>🛒 TechNest Support</h1>
-        <button onClick={clearChat} className="clear-btn">New Chat</button>
+        <div className="header-brand">
+          <span className="header-icon">💬</span>
+          <div>
+            <h1>TechNest Support</h1>
+            <span className="header-status">
+              <span className="status-dot"></span>
+              Online
+            </span>
+          </div>
+        </div>
+        <button onClick={clearChat} className="btn-new-chat">
+          + New Chat
+        </button>
       </header>
 
       {/* Messages */}
       <main className="messages">
         {messages.length === 0 && !isLoading && (
           <div className="welcome">
-            <p>👋 Hi! I'm your TechNest support assistant.</p>
-            <p>Ask me about shipping, returns, payments, or anything else!</p>
+            <div className="welcome-icon">🛒</div>
+            <h2>Welcome to TechNest Support!</h2>
+            <p>I'm your AI assistant. Ask me about shipping, returns, payments, or anything else!</p>
+            <div className="suggestions">
+              <button onClick={() => send("What are your shipping options?")}>📦 Shipping Options</button>
+              <button onClick={() => send("What is your return policy?")}>🔄 Return Policy</button>
+              <button onClick={() => send("What payment methods do you accept?")}>💳 Payment Methods</button>
+              <button onClick={() => send("Do you have any discounts?")}>🎉 Discounts</button>
+            </div>
           </div>
         )}
 
         {messages.map(msg => (
           <div key={msg.id} className={`message ${msg.sender}`}>
-            <div className="bubble">{msg.text}</div>
+            {msg.sender === 'ai' && <div className="avatar">🤖</div>}
+            <div className="message-content">
+              <div className="bubble">{msg.text}</div>
+              <span className="timestamp">{formatTime(msg.timestamp)}</span>
+            </div>
+            {msg.sender === 'user' && <div className="avatar user-avatar">👤</div>}
           </div>
         ))}
 
         {isLoading && (
           <div className="message ai">
-            <div className="bubble typing">Thinking...</div>
+            <div className="avatar">🤖</div>
+            <div className="message-content">
+              <div className="bubble typing">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -61,24 +102,40 @@ function App() {
       {/* Error Toast */}
       {error && (
         <div className="error-toast">
-          {error}
-          <button onClick={() => setError(null)}>✕</button>
+          <span className="error-icon">⚠️</span>
+          <span>{error}</span>
+          <button onClick={() => setError(null)} aria-label="Dismiss">✕</button>
         </div>
       )}
 
       {/* Input */}
       <footer className="input-area">
-        <input
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type your message..."
-          disabled={isLoading}
-        />
-        <button onClick={handleSend} disabled={isLoading || !input.trim()}>
-          Send
-        </button>
+        <div className="input-wrapper">
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type your message..."
+            disabled={isLoading}
+            maxLength={4000}
+          />
+          <button
+            onClick={handleSend}
+            disabled={isLoading || !input.trim()}
+            aria-label="Send message"
+          >
+            {isLoading ? (
+              <span className="spinner"></span>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+              </svg>
+            )}
+          </button>
+        </div>
+        <p className="input-hint">Press Enter to send • Shift+Enter for new line</p>
       </footer>
     </div>
   );
