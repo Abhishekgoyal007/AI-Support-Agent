@@ -5,48 +5,46 @@ import { chatRouter } from './routes/chat.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Allow both localhost and production frontend
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    process.env.CLIENT_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(null, true); // Allow all for now (can restrict later)
+        }
+    },
     credentials: true
 }));
+
 app.use(express.json({ limit: '1mb' }));
 app.use(requestLogger);
 
-// Health check endpoint
 app.get('/health', (_req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        service: 'Spur AI Support Agent API'
-    });
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API Routes
 app.use('/api/chat', chatRouter);
 
-// 404 handler
 app.use((req, res) => {
-    res.status(404).json({
-        error: 'Not Found',
-        message: `Route ${req.method} ${req.path} not found`
-    });
+    res.status(404).json({ error: `Route ${req.method} ${req.path} not found` });
 });
 
-// Global error handler
 app.use(errorHandler);
 
-// Start server
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/health`);
-    console.log(`💬 Chat API: http://localhost:${PORT}/api/chat`);
+    console.log(`Server running on port ${PORT}`);
 });
 
 export default app;
