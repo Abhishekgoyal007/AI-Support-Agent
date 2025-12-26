@@ -18,11 +18,15 @@
     "db:reset": "npm run db:reset --workspace=server"
   },
   "devDependencies": {
+    "@vercel/node": "^5.5.16",
     "concurrently": "^8.2.2"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "author": "Abhishek Ashok Goyal",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1"
+  }
 }
