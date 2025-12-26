@@ -4,7 +4,7 @@ import { knowledgeService } from './knowledgeService.js';
 
 // Configuration
 const MAX_HISTORY_MESSAGES = 10;
-const MODEL = 'gemini-1.5-flash';
+const MODEL = 'gemini-2.5-flash';
 
 interface LLMResponse {
     reply: string;
