@@ -4,7 +4,7 @@ AI-powered customer support chat for Spur's take-home assignment. Built with Rea
 
 **Live Demo:** https://ai-support-agent-client.vercel.app
 
-**Backend API:** https://server-production-90574.up.railway.app
+**API Base:** Same domain (Vercel serverless functions)
 
 ## Quick Start
 

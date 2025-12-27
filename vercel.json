@@ -15,15 +15,15 @@
     ],
     "routes": [
         {
-            "src": "/api/chat/history/(.*)",
+            "src": "/chat/history/(.*)",
             "dest": "/api/chat/[sessionId].ts"
         },
         {
-            "src": "/api/chat/message",
+            "src": "/chat/message",
             "dest": "/api/chat/message.ts"
         },
         {
-            "src": "/api/health",
+            "src": "/health",
             "dest": "/api/health.ts"
         },
         {
