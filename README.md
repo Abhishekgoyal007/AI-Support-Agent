@@ -2,9 +2,12 @@
 
 > AI-powered live chat customer support agent for Spur's Founding Full-Stack Engineer take-home assignment.
 
+![Status](https://img.shields.io/badge/Status-Live-brightgreen) ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue) ![React](https://img.shields.io/badge/React-18-61dafb) ![License](https://img.shields.io/badge/License-MIT-yellow)
+
 **🌐 Live Demo:** [ai-support-agent-client.vercel.app](https://ai-support-agent-client.vercel.app)
 
 **📦 GitHub:** [github.com/Abhishekgoyal007/AI-Support-Agent](https://github.com/Abhishekgoyal007/AI-Support-Agent)
+
 
 ---
 
