@@ -135,7 +135,7 @@ function App() {
             )}
           </button>
         </div>
-        <p className="input-hint">Press Enter to send • Shift+Enter for new line</p>
+        <p className="input-hint">Press Enter to send</p>
       </footer>
     </div>
   );
