@@ -2,7 +2,7 @@
 
 > AI-powered live chat customer support agent for Spur's Founding Full-Stack Engineer take-home assignment.
 
-![Status](https://img.shields.io/badge/Status-Live-brightgreen) ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue) ![React](https://img.shields.io/badge/React-18-61dafb) ![License](https://img.shields.io/badge/License-MIT-yellow)
+![Status](https://img.shields.io/badge/Status-Live-brightgreen) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![React](https://img.shields.io/badge/React-19-61dafb) ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 **🌐 Live Demo:** [ai-support-agent-client.vercel.app](https://ai-support-agent-client.vercel.app)
 
@@ -88,7 +88,7 @@ npm run dev
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React 18 + Vite + TypeScript |
+| **Frontend** | React 19 + Vite + TypeScript |
 | **Backend** | Node.js + Express + TypeScript |
 | **Database** | PostgreSQL (Neon) + Prisma ORM |
 | **LLM** | Groq API (Llama 3.1 8B Instant) |
